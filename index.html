@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>成绩分析工具</title>
+  <style>
+    :root {
+      --bg: #f6f7f2;
+      --panel: #ffffff;
+      --ink: #1f2933;
+      --muted: #6b7280;
+      --line: #d8ddd2;
+      --brand: #0f766e;
+      --brand-dark: #115e59;
+      --good: #0f766e;
+      --warn: #b7791f;
+      --bad: #b91c1c;
+      --soft: #e8f3ef;
+      --chip: #edf2f7;
+      --shadow: 0 12px 30px rgba(28, 39, 49, .08);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+      line-height: 1.5;
+    }
+
+    header {
+      background: #12312f;
+      color: #fff;
+      padding: 22px 28px;
+      border-bottom: 5px solid #d6a84f;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 750;
+      letter-spacing: 0;
+    }
+
+    header p {
+      margin: 6px 0 0;
+      color: #d9e5e2;
+      max-width: 920px;
+    }
+
+    main {
+      width: min(1320px, calc(100% - 32px));
+      margin: 22px auto 48px;
+      display: grid;
+      gap: 18px;
+    }
+
+    section, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    section { padding: 18px; }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 19px;
+      letter-spacing: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      font-weight: 650;
+      color: #26343f;
+      min-width: 0;
+    }
+
+    input, textarea, select, button {
+      font: inherit;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid #cbd5d1;
+      border-radius: 7px;
+      padding: 10px 11px;
+      color: var(--ink);
+      background: #fff;
+      outline: none;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, .14);
+    }
+
+    textarea {
+      min-height: 230px;
+      resize: vertical;
+      font-family: Consolas, "Microsoft YaHei", monospace;
+      line-height: 1.45;
+    }
+
+    button {
+      border: 0;
+      border-radius: 7px;
+      padding: 10px 14px;
+      font-weight: 750;
+      cursor: pointer;
+      color: #fff;
+      background: var(--brand);
+      min-height: 42px;
+    }
+
+    button:hover { background: var(--brand-dark); }
+    button.secondary {
+      color: #17312e;
+      background: #e4eee9;
+      border: 1px solid #bdd2cc;
+    }
+    button.secondary:hover { background: #d6e8e1; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(130px, 1fr));
+      gap: 14px;
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: minmax(340px, .9fr) minmax(360px, 1.1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 8px 0 0;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px;
+      background: #fbfcfa;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .metric strong {
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 10px 11px;
+      border-bottom: 1px solid #e5e9e3;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #eef4ef;
+      font-size: 13px;
+      color: #334155;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .tab {
+      color: #24413d;
+      background: #e6eee9;
+      border: 1px solid #c7d7d1;
+      padding: 8px 12px;
+      min-height: auto;
+    }
+
+    .tab.active {
+      background: var(--brand);
+      color: white;
+      border-color: var(--brand);
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--chip);
+      font-size: 13px;
+      color: #374151;
+    }
+
+    .tag.good { background: #dff3eb; color: var(--good); }
+    .tag.warn { background: #fff3d7; color: var(--warn); }
+    .tag.bad { background: #fee2e2; color: var(--bad); }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .student-row {
+      display: grid;
+      grid-template-columns: 52px 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fff;
+    }
+
+    .rank {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      background: #12312f;
+      color: #fff;
+    }
+
+    .name {
+      font-weight: 750;
+      min-width: 0;
+    }
+
+    .name small {
+      display: block;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .bar-cell {
+      min-width: 170px;
+      width: 220px;
+    }
+
+    .bar {
+      height: 9px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      overflow: hidden;
+    }
+
+    .bar i {
+      display: block;
+      height: 100%;
+      background: var(--brand);
+    }
+
+    .notice {
+      border: 1px dashed #b9c7c2;
+      background: #fbfcfa;
+      color: #45535f;
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .save-panel {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .storage-row {
+      display: grid;
+      grid-template-columns: minmax(190px, 1fr) auto auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .saved-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+      max-height: 230px;
+      overflow: auto;
+    }
+
+    .saved-item {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px;
+      background: #fbfcfa;
+    }
+
+    .saved-item strong,
+    .saved-item small {
+      display: block;
+    }
+
+    .saved-item small {
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .mini-button {
+      min-height: 34px;
+      padding: 7px 10px;
+      font-size: 14px;
+    }
+
+    .hidden { display: none; }
+
+    @media (max-width: 920px) {
+      header { padding: 18px; }
+      header h1 { font-size: 23px; }
+      main { width: min(100% - 20px, 1320px); }
+      .grid, .two, .cards { grid-template-columns: 1fr; }
+      .storage-row, .saved-item { grid-template-columns: 1fr; }
+      .student-row {
+        grid-template-columns: 42px 1fr;
+      }
+      .student-row .tag, .student-row .score-pill {
+        justify-self: start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>成绩分析工具</h1>
+    <p>设定每次考试的总分、优秀线、及格线，批量粘贴各班成绩后自动生成班级对比、梯次名单和重点关注学生。</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>本次考试设置</h2>
+      <div class="grid">
+        <label>考试名称
+          <input id="examName" type="text" value="本次考试" placeholder="例如：期中考试">
+        </label>
+        <label>总分
+          <input id="totalScore" type="number" min="1" value="100">
+        </label>
+        <label>优秀分
+          <input id="excellentScore" type="number" min="0" value="85">
+        </label>
+        <label>及格分
+          <input id="passScore" type="number" min="0" value="60">
+        </label>
+        <label>低分警戒线
+          <input id="riskScore" type="number" min="0" value="40">
+        </label>
+      </div>
+    </section>
+
+    <section class="two">
+      <div>
+        <h2>批量输入成绩</h2>
+        <textarea id="rawInput" spellcheck="false">班级,姓名,分数
+一班,陈安,92
+一班,李文,86
+一班,黄杰,72
+一班,林可,58
+一班,周宁,39
+二班,王晨,97
+二班,赵敏,88
+二班,刘洋,76
+二班,郑欣,61
+二班,苏禾,44
+三班,许诺,83
+三班,冯宇,80
+三班,马琳,66
+三班,邓凯,52
+三班,叶青,35</textarea>
+        <p class="hint">支持从 Excel 直接复制三列：班级、姓名、分数。也可以用逗号、空格或 Tab 分隔。第一行标题可有可无。</p>
+        <div class="actions">
+          <button id="analyzeBtn">分析成绩</button>
+          <button class="secondary" id="sampleBtn">填入示例</button>
+          <button class="secondary" id="clearBtn">清空</button>
+        </div>
+      </div>
+
+      <div>
+        <h2>快速结论</h2>
+        <div id="summary" class="notice">输入成绩后点击“分析成绩”，这里会显示整体情况和各班差距。</div>
+        <div class="save-panel">
+          <h2>保存与读取</h2>
+          <div class="storage-row">
+            <label>保存名称
+              <input id="saveName" type="text" placeholder="默认使用考试名称和时间">
+            </label>
+            <button id="saveBtn">保存本次分析</button>
+            <button class="secondary" id="clearSavedBtn">清空历史</button>
+          </div>
+          <p class="hint">保存后，下次打开这个页面可以直接读取历史记录，不需要重新输入成绩。</p>
+          <div id="savedList" class="saved-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="results" class="hidden">
+      <div class="tabs">
+        <button class="tab active" data-tab="overview">总览</button>
+        <button class="tab" data-tab="classes">班级对比</button>
+        <button class="tab" data-tab="top">优秀梯次</button>
+        <button class="tab" data-tab="risk">关注名单</button>
+      </div>
+
+      <div id="overview" class="tab-panel">
+        <div class="cards" id="metrics"></div>
+      </div>
+
+      <div id="classes" class="tab-panel hidden">
+        <div class="table-wrap">
+          <table id="classTable"></table>
+        </div>
+      </div>
+
+      <div id="top" class="tab-panel hidden">
+        <div class="actions">
+          <label style="max-width:240px">显示前 N 名
+            <input id="topN" type="number" min="1" value="10">
+          </label>
+          <button id="refreshTop">更新名单</button>
+        </div>
+        <div id="topList" class="list"></div>
+      </div>
+
+      <div id="risk" class="tab-panel hidden">
+        <div class="table-wrap">
+          <table id="riskTable"></table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const SAVE_KEY = "score-analysis-saved-records";
+    let latest = { students: [], classStats: [] };
+    let sortKey = "avg";
+    let sortDir = -1;
+
+    const sample = `班级,姓名,分数
+一班,陈安,92
+一班,李文,86
+一班,黄杰,72
+一班,林可,58
+一班,周宁,39
+二班,王晨,97
+二班,赵敏,88
+二班,刘洋,76
+二班,郑欣,61
+二班,苏禾,44
+三班,许诺,83
+三班,冯宇,80
+三班,马琳,66
+三班,邓凯,52
+三班,叶青,35`;
+
+    function numberInput(id) {
+      return Number($(id).value || 0);
+    }
+
+    function parseRows(text) {
+      return text.split(/\n+/)
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map((line, index) => {
+          const parts = line.split(/\t|,|，|\s{2,}|\s/).filter(Boolean);
+          if (parts.length < 3) return null;
+          const score = Number(parts[2]);
+          if (index === 0 && Number.isNaN(score)) return null;
+          if (Number.isNaN(score)) return null;
+          return {
+            className: parts[0],
+            name: parts[1],
+            score
+          };
+        })
+        .filter(Boolean);
+    }
+
+    function pct(value) {
+      return `${(value * 100).toFixed(1)}%`;
+    }
+
+    function fmt(value, digits = 1) {
+      return Number(value).toFixed(digits);
+    }
+
+    function getBand(student, settings) {
+      if (student.score >= settings.excellent) return "优秀";
+      if (student.score >= settings.pass) return "及格";
+      if (student.score < settings.risk) return "低分";
+      return "待提升";
+    }
+
+    function analyze() {
+      const settings = {
+        examName: $("examName").value.trim() || "本次考试",
+        total: numberInput("totalScore"),
+        excellent: numberInput("excellentScore"),
+        pass: numberInput("passScore"),
+        risk: numberInput("riskScore")
+      };
+      const students = parseRows($("rawInput").value).map((s) => ({
+        ...s,
+        percent: settings.total ? s.score / settings.total : 0,
+        band: getBand(s, settings)
+      }));
+
+      if (!students.length) {
+        $("summary").className = "notice";
+        $("summary").textContent = "还没有读到有效成绩。请按“班级、姓名、分数”的格式粘贴数据。";
+        $("results").classList.add("hidden");
+        return;
+      }
+
+      const byClass = new Map();
+      students.forEach((s) => {
+        if (!byClass.has(s.className)) byClass.set(s.className, []);
+        byClass.get(s.className).push(s);
+      });
+
+      const classStats = Array.from(byClass, ([className, list]) => {
+        const scores = list.map(s => s.score);
+        const total = scores.reduce((a, b) => a + b, 0);
+        const excellent = list.filter(s => s.score >= settings.excellent).length;
+        const passed = list.filter(s => s.score >= settings.pass).length;
+        const risk = list.filter(s => s.score < settings.risk).length;
+        const max = Math.max(...scores);
+        const min = Math.min(...scores);
+        return {
+          className,
+          count: list.length,
+          avg: total / list.length,
+          max,
+          min,
+          range: max - min,
+          excellent,
+          pass: passed,
+          risk,
+          excellentRate: excellent / list.length,
+          passRate: passed / list.length,
+          riskRate: risk / list.length
+        };
+      });
+
+      latest = { students, classStats, settings, rawInput: $("rawInput").value };
+      renderSummary(students, classStats, settings);
+      renderMetrics(students, classStats, settings);
+      renderClassTable();
+      renderTopList();
+      renderRiskTable(students, settings);
+      $("results").classList.remove("hidden");
+      if (!$("saveName").value.trim()) {
+        $("saveName").value = settings.examName;
+      }
+    }
+
+    function renderSummary(students, classStats, settings) {
+      const avg = students.reduce((sum, s) => sum + s.score, 0) / students.length;
+      const bestClass = [...classStats].sort((a, b) => b.avg - a.avg)[0];
+      const excellentCount = students.filter(s => s.score >= settings.excellent).length;
+      const passCount = students.filter(s => s.score >= settings.pass).length;
+      const riskCount = students.filter(s => s.score < settings.risk).length;
+      const gap = classStats.length > 1
+        ? classStats.sort((a, b) => b.avg - a.avg)[0].avg - classStats.sort((a, b) => a.avg - b.avg)[0].avg
+        : 0;
+
+      $("summary").innerHTML = `
+        <strong>${settings.examName}：共 ${students.length} 人，${classStats.length} 个班。</strong><br>
+        整体平均分 ${fmt(avg)}，优秀 ${excellentCount} 人（${pct(excellentCount / students.length)}），及格 ${passCount} 人（${pct(passCount / students.length)}），低分警戒 ${riskCount} 人（${pct(riskCount / students.length)}）。<br>
+        目前平均分最高的是 <strong>${bestClass.className}</strong>（${fmt(bestClass.avg)} 分）。班级平均分最大差距为 <strong>${fmt(gap)}</strong> 分。
+      `;
+    }
+
+    function renderMetrics(students, classStats, settings) {
+      const scores = students.map(s => s.score);
+      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+      const excellentCount = students.filter(s => s.score >= settings.excellent).length;
+      const passCount = students.filter(s => s.score >= settings.pass).length;
+      const riskCount = students.filter(s => s.score < settings.risk).length;
+      const metrics = [
+        ["参考人数", `${students.length}`],
+        ["整体平均分", fmt(avg)],
+        ["最高分", Math.max(...scores)],
+        ["优秀率", pct(excellentCount / students.length)],
+        ["及格率", pct(passCount / students.length)],
+        ["低分警戒", `${riskCount} 人`],
+        ["班级数量", `${classStats.length}`],
+        ["考试名称", settings.examName],
+        ["总分", `${settings.total}`],
+        ["优秀线", `${settings.excellent}`],
+        ["及格线", `${settings.pass}`]
+      ];
+      $("metrics").innerHTML = metrics.map(([label, value]) => `
+        <div class="metric"><span>${label}</span><strong>${value}</strong></div>
+      `).join("");
+    }
+
+    function renderClassTable() {
+      const rows = [...latest.classStats].sort((a, b) => {
+        const av = a[sortKey];
+        const bv = b[sortKey];
+        return av > bv ? sortDir : av < bv ? -sortDir : 0;
+      });
+      $("classTable").innerHTML = `
+        <thead><tr>
+          <th data-key="className">班级</th>
+          <th data-key="count">人数</th>
+          <th data-key="avg">平均分</th>
+          <th data-key="max">最高</th>
+          <th data-key="min">最低</th>
+          <th data-key="excellentRate">优秀率</th>
+          <th data-key="passRate">及格率</th>
+          <th data-key="riskRate">低分率</th>
+          <th data-key="range">分差</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map((r, i) => `
+            <tr>
+              <td><strong>${i + 1}. ${r.className}</strong></td>
+              <td>${r.count}</td>
+              <td><strong>${fmt(r.avg)}</strong></td>
+              <td>${r.max}</td>
+              <td>${r.min}</td>
+              <td><span class="tag good">${pct(r.excellentRate)} / ${r.excellent}人</span></td>
+              <td><span class="tag">${pct(r.passRate)} / ${r.pass}人</span></td>
+              <td><span class="tag ${r.risk ? "bad" : "good"}">${pct(r.riskRate)} / ${r.risk}人</span></td>
+              <td>${fmt(r.range)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      `;
+      document.querySelectorAll("#classTable th").forEach((th) => {
+        th.addEventListener("click", () => {
+          const key = th.dataset.key;
+          sortDir = sortKey === key ? sortDir * -1 : -1;
+          sortKey = key;
+          renderClassTable();
+        });
+      });
+    }
+
+    function renderTopList() {
+      const topN = Math.max(1, Number($("topN").value || 10));
+      const rows = [...latest.students].sort((a, b) => b.score - a.score).slice(0, topN);
+      $("topList").innerHTML = rows.map((s, i) => {
+        const width = latest.settings.total ? Math.min(100, Math.max(0, s.score / latest.settings.total * 100)) : 0;
+        const tagClass = s.band === "优秀" ? "good" : s.band === "低分" ? "bad" : s.band === "待提升" ? "warn" : "";
+        return `
+          <div class="student-row">
+            <div class="rank">${i + 1}</div>
+            <div class="name">${s.name}<small>${s.className}</small></div>
+            <div class="bar-cell"><div class="bar"><i style="width:${width}%"></i></div></div>
+            <span class="tag ${tagClass}">${s.score} 分 · ${s.band}</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderRiskTable(students, settings) {
+      const rows = [...students].filter(s => s.score < settings.pass).sort((a, b) => a.score - b.score);
+      $("riskTable").innerHTML = `
+        <thead><tr>
+          <th>班级</th>
+          <th>姓名</th>
+          <th>分数</th>
+          <th>距离及格</th>
+          <th>状态</th>
+        </tr></thead>
+        <tbody>
+          ${rows.length ? rows.map((s) => `
+            <tr>
+              <td>${s.className}</td>
+              <td><strong>${s.name}</strong></td>
+              <td>${s.score}</td>
+              <td>${Math.max(0, settings.pass - s.score)} 分</td>
+              <td><span class="tag ${s.score < settings.risk ? "bad" : "warn"}">${s.score < settings.risk ? "低分警戒" : "未及格"}</span></td>
+            </tr>
+          `).join("") : `<tr><td colspan="5">没有未及格学生。</td></tr>`}
+        </tbody>
+      `;
+    }
+
+    function readSavedRecords() {
+      try {
+        return JSON.parse(localStorage.getItem(SAVE_KEY) || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    function writeSavedRecords(records) {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(records));
+    }
+
+    function formatTime(value) {
+      return new Date(value).toLocaleString("zh-CN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function saveCurrentAnalysis() {
+      analyze();
+      if (!latest.students.length) return;
+
+      const now = new Date();
+      const name = $("saveName").value.trim() || `${latest.settings.examName} ${formatTime(now)}`;
+      const record = {
+        id: `${now.getTime()}`,
+        name,
+        savedAt: now.toISOString(),
+        settings: latest.settings,
+        rawInput: $("rawInput").value,
+        studentCount: latest.students.length,
+        classCount: latest.classStats.length,
+        avg: latest.students.reduce((sum, s) => sum + s.score, 0) / latest.students.length
+      };
+
+      const records = readSavedRecords().filter(item => item.name !== name);
+      records.unshift(record);
+      writeSavedRecords(records.slice(0, 50));
+      $("saveName").value = name;
+      renderSavedList();
+      $("summary").innerHTML += `<br><span class="tag good">已保存：${name}</span>`;
+    }
+
+    function loadSavedRecord(id) {
+      const record = readSavedRecords().find(item => item.id === id);
+      if (!record) return;
+      $("examName").value = record.settings.examName || record.name || "本次考试";
+      $("totalScore").value = record.settings.total;
+      $("excellentScore").value = record.settings.excellent;
+      $("passScore").value = record.settings.pass;
+      $("riskScore").value = record.settings.risk;
+      $("rawInput").value = record.rawInput;
+      $("saveName").value = record.name;
+      analyze();
+      $("summary").innerHTML += `<br><span class="tag">已读取：${record.name}</span>`;
+    }
+
+    function deleteSavedRecord(id) {
+      const records = readSavedRecords().filter(item => item.id !== id);
+      writeSavedRecords(records);
+      renderSavedList();
+    }
+
+    function renderSavedList() {
+      const records = readSavedRecords();
+      if (!records.length) {
+        $("savedList").innerHTML = `<div class="notice">还没有保存记录。</div>`;
+        return;
+      }
+
+      $("savedList").innerHTML = records.map(record => `
+        <div class="saved-item">
+          <div>
+            <strong>${record.name}</strong>
+            <small>${formatTime(record.savedAt)} · ${record.classCount} 个班 · ${record.studentCount} 人 · 平均 ${fmt(record.avg)}</small>
+          </div>
+          <button class="mini-button" data-load="${record.id}">读取</button>
+          <button class="mini-button secondary" data-delete="${record.id}">删除</button>
+        </div>
+      `).join("");
+
+      document.querySelectorAll("[data-load]").forEach((btn) => {
+        btn.addEventListener("click", () => loadSavedRecord(btn.dataset.load));
+      });
+      document.querySelectorAll("[data-delete]").forEach((btn) => {
+        btn.addEventListener("click", () => deleteSavedRecord(btn.dataset.delete));
+      });
+    }
+
+    document.querySelectorAll(".tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
+        btn.classList.add("active");
+        $(btn.dataset.tab).classList.remove("hidden");
+      });
+    });
+
+    $("analyzeBtn").addEventListener("click", analyze);
+    $("saveBtn").addEventListener("click", saveCurrentAnalysis);
+    $("refreshTop").addEventListener("click", renderTopList);
+    $("sampleBtn").addEventListener("click", () => {
+      $("rawInput").value = sample;
+      analyze();
+    });
+    $("clearBtn").addEventListener("click", () => {
+      $("rawInput").value = "";
+      $("results").classList.add("hidden");
+      $("summary").className = "notice";
+      $("summary").textContent = "输入成绩后点击“分析成绩”，这里会显示整体情况和各班差距。";
+    });
+    $("clearSavedBtn").addEventListener("click", () => {
+      if (!readSavedRecords().length) return;
+      if (confirm("确定要清空所有保存记录吗？")) {
+        writeSavedRecords([]);
+        renderSavedList();
+      }
+    });
+
+    renderSavedList();
+    analyze();
+  </script>
+</body>
+</html>
